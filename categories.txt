@@ -1,0 +1,145 @@
+1. Logistics and Transportation
+
+Analysis:
+The logistics sector is growing due to e-commerce demand and supply chain optimization. Real-time tracking, fuel costs, and delivery efficiency are key factors.
+
+Websites to Scrape:
+
+DHL
+FedEx
+Freightos
+
+Data to Extract:
+
+Shipping rates
+Delivery times
+Fuel price trends
+2. Marketing and Social Media
+
+Analysis:
+Digital marketing is driven by engagement metrics, trends, and audience behavior.
+
+Websites to Scrape:
+
+Twitter
+Instagram
+HubSpot
+
+Data to Extract:
+
+Trending hashtags
+Engagement rates
+Ad performance
+3. Real Estate and Urban Development
+
+Analysis:
+Property prices and urban expansion are influenced by demand, infrastructure, and economic growth.
+
+Websites to Scrape:
+
+Zillow
+Realtor.com
+
+Data to Extract:
+
+Property prices
+Location trends
+Rental rates
+4. E-commerce and Retail
+
+Analysis:
+E-commerce is driven by pricing strategies, customer reviews, and product demand.
+
+Websites to Scrape:
+
+Amazon
+eBay
+Daraz
+
+Data to Extract:
+
+Product prices
+Reviews & ratings
+Sales trends
+5. Healthcare and Pharmaceutical
+
+Analysis:
+Healthcare trends depend on drug demand, disease outbreaks, and medical advancements.
+
+Websites to Scrape:
+
+World Health Organization
+Pfizer
+
+Data to Extract:
+
+Drug prices
+Disease reports
+Healthcare statistics
+6. Finance and Investment
+
+Analysis:
+Financial markets depend on stock prices, interest rates, and economic indicators.
+
+Websites to Scrape:
+
+Yahoo Finance
+Bloomberg
+
+Data to Extract:
+
+Stock prices
+Market trends
+Currency exchange rates
+7. Technology and Software
+
+Analysis:
+Rapid innovation and product releases drive this sector.
+
+Websites to Scrape:
+
+GitHub
+Stack Overflow
+
+Data to Extract:
+
+Trending technologies
+Developer activity
+Software updates
+8. Energy and Environment
+
+Analysis:
+Energy markets depend on oil prices, renewable energy adoption, and climate policies.
+
+Websites to Scrape:
+
+International Energy Agency
+BP
+
+Data to Extract:
+
+Oil prices
+Energy consumption
+Environmental data
+🔥 Best Websites for Your Project (Easy to Scrape)
+
+If you want practical scraping (like your NotifyNepal project), use:
+
+Commodity:
+notifynepal.com ✅ (you already use this)
+Finance:
+Yahoo Finance
+E-commerce:
+Daraz (good for Nepal region)
+Tech:
+GitHub trending page
+⚙️ Pro Tip for Your Selenium Project
+
+Use:
+
+Selenium → dynamic sites (JavaScript heavy)
+BeautifulSoup → parsing HTML
+Requests → faster scraping when possible
+🧾 Conclusion (for report)
+
+The Market Intelligence system collects and analyzes data from multiple sectors such as logistics, finance, healthcare, and e-commerce. By leveraging web scraping techniques, it provides real-time insights into market trends, pricing strategies, and consumer behavior, supporting informed decision-making.

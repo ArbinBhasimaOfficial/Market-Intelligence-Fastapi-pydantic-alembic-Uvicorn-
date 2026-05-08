@@ -1,0 +1,53 @@
+# Binaries and platform-specific executables
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+bin/
+
+# Go
+vendor/
+go.sum
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+.python-version
+.env
+.env.*
+!.env.example
+
+# Python tooling caches
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.pyre/
+.hypothesis/
+.coverage
+.coverage.*
+htmlcov/
+
+# Packaging / build artifacts
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# Node/Next.js
+node_modules/
+.next/
+out/
+build/
+
+# IDEs
+.vscode/
+.idea/
+
+# OS / misc
+.DS_Store
+Thumbs.db

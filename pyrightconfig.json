@@ -1,0 +1,7 @@
+{
+  "include": [
+    "FastApiBackend/backend"
+  ],
+  "venvPath": "FastApiBackend",
+  "venv": "venv"
+}
