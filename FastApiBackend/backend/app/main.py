@@ -1,0 +1,92 @@
+import os
+from fastapi import FastAPI, Depends
+from app.database import engine
+from sqlmodel import SQLModel
+from contextlib import asynccontextmanager
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+
+
+# from app.routers import course as course_router
+# from app.routers import chapter as chapter_router
+# from app.routers import subchapter as subchapter_router
+# from app.routers import coursecontent as coursecontent_router
+
+from app.tutorial import routers as tutorial_router
+from app.account import routers as account_router
+from app.neclicense import router as nec_router
+from app.infography import routers as infography_router
+
+from app.dependencies import get_token_header
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print("Starting up..........")
+    # print("creating database and tables................")
+    # from app.models import Course,Chapter,SubChapter,CourseContent
+    # from app.tutorial.models import Course,Chapter,SubChapter,CourseContent
+    SQLModel.metadata.create_all(engine)
+    yield
+    print("Shutting down........")
+
+
+# app = FastAPI(lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
+app = FastAPI(lifespan=lifespan)
+
+# app.mount(
+#     "/uploads", StaticFiles(directory="/opt/tutorial-backend/uploads"), name="uploads"
+# )
+
+script_dir = os.path.dirname(__file__)
+
+upload_dir = os.path.join(script_dir, "uploads")
+
+if not os.path.exists(upload_dir):
+    os.makedirs(upload_dir)
+
+
+@app.get("/list-uploads")
+def list_uploads():
+    try:
+        files = os.listdir(upload_dir)
+        return {"files": files}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+app.mount("/uploads", StaticFiles(directory=upload_dir), name="uploads")
+
+
+# app = FastAPI(lifespan=lifespan)
+
+# app.include_router(tutorial_router.router)
+# app.include_router(account_router.router)
+# app.include_router(nec_router.router)
+app.include_router(infography_router.router)
+
+# app.include_router(course_router.router)
+# app.include_router(chapter_router.router)
+# app.include_router(subchapter_router.router)
+# app.include_router(coursecontent_router.router)
+
+origins = [
+    # "https://ezexplanation.com",
+    # "https://www.ezexplanation.com",
+    # "http://localhost:3000",
+    # "http://127.0.0.1:3000",
+    # "http://127.0.0.1:3001",
+    # "http://localhost:3001",
+    "http://127.0.0.1:8001",
+    # "https://www.infographytech.com",
+    # "https://infographytech.com",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_origin_regex=r"https://.*\.vercel\.app",
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)

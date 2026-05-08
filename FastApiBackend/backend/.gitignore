@@ -1,0 +1,36 @@
+# Python
+__pycache__
+*.pyc
+*.pyd
+*.pyo
+*.swp
+*.egg
+*.egg-info
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env/
+pip-wheel-metadata/
+
+# FastAPI and other project-specific files
+.env
+db.sqlite
+test_db.db
+/app/.env
+
+# Editors/IDE files
+.idea/  # For PyCharm/IntelliJ
+.vscode/ # For VS Code
+*~
+
+# Build artifacts
+dist/
+build/
+*.whl
+
+uploads/
+uploads/**
+parquet_data/
+parquet_data/**

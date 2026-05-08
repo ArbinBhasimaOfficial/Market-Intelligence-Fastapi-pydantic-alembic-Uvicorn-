@@ -1,0 +1,396 @@
+import string
+import random
+from datetime import datetime
+from typing import Optional, List
+
+from sqlmodel import SQLModel, Field, Relationship, select
+from pydantic import model_validator, ValidationInfo
+from sqlalchemy import Column, Text, DateTime, func
+from slugify import slugify
+
+from app.database import Session
+
+
+def generate_random_string(length: int = 4) -> str:
+    letters = string.ascii_letters
+    return "".join(random.choices(letters, k=length))
+
+
+def generate_unique_slug(name: str, session: Session, model) -> str:
+    base_slug = slugify(name)
+    slug = base_slug
+
+    while True:
+        statement = select(model).where(model.slug == slug)
+        existing = session.exec(statement).first()
+
+        if not existing:
+            return slug
+
+        slug = f"{base_slug}-{generate_random_string(4)}"
+
+
+class BaseModel(SQLModel):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    slug: Optional[str] = Field(
+        default=None, index=True, sa_column_kwargs={"unique": True}
+    )
+    is_active: bool = Field(default=True)
+
+    created_at: Optional[datetime] = Field(
+        default=None,
+        sa_column=Column(DateTime(timezone=True), server_default=func.now()),
+    )
+
+    updated_at: Optional[datetime] = Field(
+        default=None,
+        sa_column=Column(
+            DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+        ),
+    )
+
+    @model_validator(mode="before")
+    @classmethod
+    def generate_slug_from_name(cls, data: dict, info: ValidationInfo):
+        if not isinstance(data, dict):
+            return data
+
+        name = data.get("name")
+        slug = data.get("slug")
+
+        if name and not slug:
+            context = info.context or {}
+            session = context.get("session")
+            model_class = context.get("model_class")
+
+            if session and model_class:
+                data["slug"] = generate_unique_slug(name, session, model_class)
+            else:
+                data["slug"] = f"{slugify(name)}-{generate_random_string(4)}"
+
+        return data
+
+
+# models for category
+class Category(BaseModel, table=True):
+    name: str = Field(index=True)
+
+    datasets: List["Dataset"] = Relationship(back_populates="category")
+    reports: List["Report"] = Relationship(back_populates="category")
+
+
+class CategoryCreate(SQLModel):
+    name: str
+
+
+class CategoryRead(SQLModel):
+    id: int
+    name: str
+    slug: str
+
+
+# models for tag
+class Tag(BaseModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str = Field(index=True)
+    slug: Optional[str] = Field(default=None, index=True, unique=True)
+
+    dataset_links: List["DatasetTag"] = Relationship(back_populates="tag")
+    report_links: List["ReportTag"] = Relationship(back_populates="tag")
+
+    def __init__(self, **data):
+        # Automatically generate slug from name if not provided
+        if "slug" not in data and "name" in data:
+            data["slug"] = slugify(data["name"])
+        super().__init__(**data)
+
+
+class TagCreate(SQLModel):
+    name: str
+
+
+class TagRead(SQLModel):
+    id: int
+    name: str
+    slug: str
+
+
+# models for dataset
+
+
+class Dataset(BaseModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str = Field(index=True)
+    description: str = Field(sa_column=Column(Text))
+    file_path: Optional[str] = None
+
+    # Fields required for DatasetRead to work
+    slug: Optional[str] = Field(default=None, index=True, unique=True)
+    is_active: bool = Field(default=True)
+
+    # One-to-Many Category
+    category_id: Optional[int] = Field(default=None, foreign_key="category.id")
+    category: Optional["Category"] = Relationship(back_populates="datasets")
+
+    # Many-to-Many Tags
+    tag_links: List["DatasetTag"] = Relationship(back_populates="dataset")
+
+    def __init__(self, **data):
+        if "slug" not in data and "name" in data:
+            data["slug"] = slugify(data["name"])
+        super().__init__(**data)
+
+
+class DatasetCreate(SQLModel):
+    name: str
+    description: str
+    category_id: Optional[int]
+    tags_ids: List[int] = []
+
+
+class DatasetRead(SQLModel):
+    id: int
+    name: str
+    description: str
+    slug: str
+    file_path: Optional[str]
+    is_active: bool
+
+
+# models for dataset tag
+class DatasetTag(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+
+    dataset_id: int = Field(foreign_key="dataset.id")
+    tag_id: int = Field(foreign_key="tag.id")
+
+    dataset: Optional[Dataset] = Relationship(back_populates="tag_links")
+    tag: Optional[Tag] = Relationship(back_populates="dataset_links")
+
+
+# models for report
+
+
+class Report(BaseModel, table=True):
+    name: str = Field(index=True)
+    description: str = Field(sa_column=Column(Text))
+    content: str = Field(sa_column=Column(Text))
+
+    # Category
+    category_id: Optional[int] = Field(default=None, foreign_key="category.id")
+    category: Optional[Category] = Relationship(back_populates="reports")
+
+    # Tags
+    tag_links: List["ReportTag"] = Relationship(back_populates="report")
+
+    # Topics
+    topics: List["ReportTopic"] = Relationship(back_populates="report")
+
+    # Datasets
+    dataset_links: List["ReportDataset"] = Relationship(back_populates="report")
+
+
+class ReportCreate(SQLModel):
+    name: str
+    description: str
+    content: str
+    category_id: Optional[int]
+
+
+class ReportRead(SQLModel):
+    id: int
+    name: str
+    description: str
+    content: str
+    slug: str
+    is_active: bool
+
+
+# models for reportTopic
+
+
+class ReportTopic(BaseModel, table=True):
+    name: str = Field(index=True)
+    topic_content: str = Field(sa_column=Column(Text))
+
+    report_id: Optional[int] = Field(default=None, foreign_key="report.id")
+
+    report: Optional["Report"] = Relationship(back_populates="topics")
+
+    graphs: List["ReportGraph"] = Relationship(back_populates="topic")
+
+
+class ReportTopicCreate(SQLModel):
+    name: str
+    topic_content: str
+    report_id: int
+
+
+class ReportTopicRead(SQLModel):
+    id: int
+    name: str
+    topic_content: str
+
+
+# models for reportGraph
+
+
+class ReportGraph(BaseModel, table=True):
+    title: str = Field(index=True)
+    report_topic_id: Optional[int] = Field(default=None, foreign_key="reporttopic.id")
+    chart_config: Optional[str] = Field(default=None, sa_column=Column(Text))
+    dataset_id: Optional[int] = Field(default=None, foreign_key="dataset.id")
+    topic: Optional["ReportTopic"] = Relationship(back_populates="graphs")
+    dataset: Optional["Dataset"] = Relationship()
+
+
+class ReportGraphCreate(SQLModel):
+    title: str
+    report_topic_id: int
+    chart_config: Optional[str]
+    dataset_id: Optional[int] = None
+
+
+class ReportGraphRead(SQLModel):
+    id: int
+    title: str
+    report_topic_id: int
+    chart_config: Optional[str]
+    dataset_id: Optional[int]
+
+
+# models for ReportDataset
+
+
+class ReportDataset(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+
+    dataset_id: Optional[int] = Field(default=None, foreign_key="dataset.id")
+    report_id: Optional[int] = Field(default=None, foreign_key="report.id")
+
+    dataset: Optional[Dataset] = Relationship()
+    report: Optional[Report] = Relationship(back_populates="dataset_links")
+
+
+class ReportDatasetCreate(SQLModel):
+    dataset_id: int
+    report_id: int
+
+
+class ReportDatasetRead(SQLModel):
+    id: int
+    report_id: int
+    dataset_id: int
+
+
+# models for report tag
+
+
+class ReportTag(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+
+    report_id: int = Field(foreign_key="report.id")
+    tag_id: int = Field(foreign_key="tag.id")
+
+    report: Optional[Report] = Relationship(back_populates="tag_links")
+    tag: Optional[Tag] = Relationship(back_populates="report_links")
+
+
+# nested tags for READ
+
+
+class TagNestedRead(SQLModel):
+    id: int
+    name: str
+    slug: str
+
+
+class DatasetTagNestedRead(SQLModel):
+    id: int
+    tag: TagNestedRead
+
+
+class ReportTagNestedRead(SQLModel):
+    id: int
+    tag: TagNestedRead
+
+
+class CategoryNestedRead(SQLModel):
+    id: int
+    name: str
+    slug: str
+
+
+class DatasetNestedRead(SQLModel):
+    id: int
+    name: str
+    description: str
+    slug: str
+    file_path: Optional[str]
+    is_active: bool
+
+    category: Optional[CategoryNestedRead]
+    tag_links: List[DatasetTagNestedRead]
+    created_at: Optional[datetime]
+    updated_at: Optional[datetime]
+
+
+# class ReportNestedRead(SQLModel):
+#     id: int
+#     name: str
+#     description: str
+#     content: str
+#     slug: str
+
+#     category: Optional[CategoryNestedRead]
+#     tag_links: List[ReportTagNestedRead]
+#     created_at: Optional[datetime]
+#     updated_at: Optional[datetime]
+
+
+class ReportGraphNestedRead(SQLModel):
+    id: int
+    title: str
+    chart_config: Optional[str]
+    dataset: Optional[DatasetNestedRead]
+
+    created_at: Optional[datetime]
+    updated_at: Optional[datetime]
+
+
+class ReportTopicNestedRead(SQLModel):
+    id: int
+    name: str
+    report_id: int
+    topic_content: str
+
+    graphs: List[ReportGraphNestedRead]
+
+    created_at: Optional[datetime]
+    updated_at: Optional[datetime]
+
+
+class ReportDatasetNestedRead(SQLModel):
+    id: int
+    dataset_id: int
+    report_id: int
+    dataset: DatasetNestedRead
+
+
+class ReportNestedRead(SQLModel):
+    id: int
+    name: str
+    description: str
+    content: str
+    slug: str
+
+    category: Optional[CategoryNestedRead]
+
+    tag_links: List[ReportTagNestedRead]
+
+    topics: List[ReportTopicNestedRead]
+
+    dataset_links: List[ReportDatasetNestedRead]
+
+    created_at: Optional[datetime]
+    updated_at: Optional[datetime]
