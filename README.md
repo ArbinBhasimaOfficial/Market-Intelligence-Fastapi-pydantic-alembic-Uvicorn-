@@ -75,4 +75,3 @@ Split large router modules into smaller domain files for maintainability
 License
 This project is currently private/internal. Add a license here if you plan to make it public.
 
-If you want, I can generate a second version tailored for a **public GitHub README** (with badges, API screenshot section, and contributor guide).
